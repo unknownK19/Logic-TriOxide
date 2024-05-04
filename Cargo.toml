@@ -1,0 +1,6 @@
+[package]
+name = "logic_trioxide"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
