@@ -62,7 +62,7 @@ impl LogicCircut {
             },
             _ => {
                 let mut sample_gate = LogicCircut {
-                    input: vec![Rc::new(RefCell::new(false))],
+                    input: vec![Rc::new(RefCell::new(false)); 2],
                     gate_type: logic_type,
                     output: RefCell::new(false).into(),
                 };
@@ -123,41 +123,38 @@ impl LogicCircut {
 }
 
 pub fn test01() {
-    let mut and1 = LogicCircut::new_with_pins(LogicGate::AND, 2);
-    let mut not1 = LogicCircut::new(LogicGate::NOT);
-    println!("{}  - {}", and1.to_string(), not1.to_string());
-    and1.change_input_config(1, true);
+    // create AND gate
+    println!("*AND Gate*");
+    let mut and1 = LogicCircut::new(LogicGate::AND);
+    println!("{}", and1.to_string());
+
     and1.change_input_config(0, true);
-    not1.update();
+    println!("{}", and1.to_string());
+
+    and1.change_input_config(0, false);
+    and1.change_input_config(1, true);
+    println!("{}", and1.to_string());
+
+    and1.change_input_config(0, true);
+    println!("{}", and1.to_string());
+
+    println!("*NOT Gate*");
+    let mut not1 = LogicCircut::new(LogicGate::NOT);
+    println!("{}", not1.to_string());
+
+    not1.change_input_config(0, true);
+    println!("{}", not1.to_string());
+    // let mut and1 = LogicCircut::new_with_pins(LogicGate::AND, 2);
+    // let mut not1 = LogicCircut::new(LogicGate::NOT);
+    // println!("{}  - {}", and1.to_string(), not1.to_string());
+    // and1.change_input_config(1, true);
+    // and1.change_input_config(0, true);
+    // not1.update();
     and1.connect_head_to(&mut not1, 0);
 
     println!("{}  -connect-> {}", and1.to_string(), not1.to_string());
 }
 
-// pub fn run_example_1() {
-//     // create AND gate
-//     println!("*AND Gate*");
-//     let mut and1 = LogicCircut::new(LogicGate::AND);
-//     println!("{}", and1.to_string());
-//
-//     and1.change_input_config(0, true);
-//     println!("{}", and1.to_string());
-//
-//     and1.change_input_config(0, false);
-//     and1.change_input_config(1, true);
-//     println!("{}", and1.to_string());
-//
-//     and1.change_input_config(0, true);
-//     println!("{}", and1.to_string());
-//
-//     println!("*NOT Gate*");
-//     let mut not1 = LogicCircut::new(LogicGate::NOT);
-//     println!("{}", not1.to_string());
-//
-//     not1.change_input_config(0, true);
-//     println!("{}", not1.to_string());
-// }
-//
 // pub fn run_example_2() {
 //     for i in 3..=7 {
 //         println!("AND Gate with {}", i);
