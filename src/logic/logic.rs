@@ -19,26 +19,26 @@ impl ToString for LogicCircut {
         let mut input = String::new();
         for i in 1..=self.input.len() {
             input.push_str(match *self.input[i - 1] {
-                true => " ",
-                _ => " ",
+                true => "\x1b[32m \x1b[0m",
+                _ => "\x1b[31m \x1b[0m",
             })
         }
         match self.gate_type {
             NOT => {
                 format!("{}󰣤 {}", input, {
                     if self.output {
-                        ""
+                        "\x1b[32m\x1b[0m"
                     } else {
-                        ""
+                        "\x1b[31m\x1b[0m"
                     }
                 })
             }
             AND => {
                 format!("{}{}󰣡 {}", input, self.input.len(), {
                     if self.output {
-                        ""
+                        "\x1b[32m\x1b[0m"
                     } else {
-                        ""
+                        "\x1b[31m\x1b[0m"
                     }
                 })
             }
@@ -133,4 +133,12 @@ pub fn run_example_1() {
 
     not1.change_input_config(0, true);
     println!("{}", not1.to_string());
+}
+
+pub fn run_example_2() {
+    for i in 3..=7 {
+        println!("AND Gate with {}", i);
+        let and2 = LogicCircut::new_with_pins(LogicGate::AND, i);
+        println!("{}", and2.to_string())
+    }
 }
