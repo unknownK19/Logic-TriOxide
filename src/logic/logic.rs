@@ -6,9 +6,17 @@ use std::{
     rc::Rc,
 };
 
+struct Circuit {
+    component: Vec<LogicCircut>,
+    //connection_path: ??,
+    //power: Vec<Rc<RefCell<bool>>>,
+    // TODO
+}
+
 pub enum LogicGate {
     AND, // AND Gate
     NOT,
+    OR,
     /*More TODO*/
 }
 
@@ -20,7 +28,7 @@ pub struct LogicCircut {
 
 impl ToString for LogicCircut {
     fn to_string(&self) -> String {
-        use LogicGate::{AND, NOT};
+        use LogicGate::{AND, NOT, OR};
         let mut input = String::new();
         // let input01 = *self.input[0].deref().borrow();
         for i in 1..=self.input.len() {
@@ -41,6 +49,15 @@ impl ToString for LogicCircut {
             }
             AND => {
                 format!("{}{}󰣡 {}", input, self.input.len(), {
+                    if *(*self.output).borrow() {
+                        "\x1b[32m\x1b[0m"
+                    } else {
+                        "\x1b[31m\x1b[0m"
+                    }
+                })
+            }
+            OR => {
+                format!("{}{}󰣥 {}", input, self.input.len(), {
                     if *(*self.output).borrow() {
                         "\x1b[32m\x1b[0m"
                     } else {
@@ -92,19 +109,30 @@ impl LogicCircut {
         }
     }
     pub fn update(&mut self) {
-        use LogicGate::{AND, NOT};
+        use LogicGate::{AND, NOT, OR};
         let input = |index: usize| *(*self.input[index]).borrow_mut();
+        let input_len = self.input.len();
         match self.gate_type {
-            NOT => match self.input.len() {
+            NOT => match input_len {
                 1 => *(*self.output).borrow_mut() = !input(0),
                 _ => panic!("Wrong Input Config"),
             },
-            AND => match self.input.len() {
+            AND => match input_len {
                 0 | 1 => panic!("Zero and Single input doesn't exist in AND Gate"),
                 _ => {
                     let mut step = 0;
                     while self.input.len() != step + 1 {
                         *(*self.output).borrow_mut() = input(step) && input(step + 1);
+                        step += 1
+                    }
+                }
+            },
+            OR => match input_len {
+                0 | 1 => panic!("Zero and Single input doesn't exist in AND Gate"),
+                _ => {
+                    let mut step = 0;
+                    while self.input.len() != step + 1 {
+                        *(*self.output).borrow_mut() = input(step) || input(step + 1);
                         step += 1
                     }
                 }
@@ -138,27 +166,36 @@ pub fn test01() {
     and1.change_input_config(0, true);
     println!("{}", and1.to_string());
 
+    //create NOT gate
     println!("*NOT Gate*");
     let mut not1 = LogicCircut::new(LogicGate::NOT);
     println!("{}", not1.to_string());
 
-    not1.change_input_config(0, true);
-    println!("{}", not1.to_string());
-    // let mut and1 = LogicCircut::new_with_pins(LogicGate::AND, 2);
-    // let mut not1 = LogicCircut::new(LogicGate::NOT);
-    // println!("{}  - {}", and1.to_string(), not1.to_string());
-    // and1.change_input_config(1, true);
-    // and1.change_input_config(0, true);
-    // not1.update();
     and1.connect_head_to(&mut not1, 0);
 
     println!("{}  -connect-> {}", and1.to_string(), not1.to_string());
-}
 
-// pub fn run_example_2() {
-//     for i in 3..=7 {
-//         println!("AND Gate with {}", i);
-//         let and2 = LogicCircut::new_with_pins(LogicGate::AND, i);
-//         println!("{}", and2.to_string())
-//     }
-// }
+    // create OR Gate
+    let mut or1 = LogicCircut::new(LogicGate::OR);
+    println!("{}", or1.to_string());
+    or1.change_input_config(0, true);
+    println!("{}", or1.to_string());
+    and1.change_input_config(0, false);
+    or1.connect_head_to(&mut and1, 0);
+
+    println!(
+        "{} -connect-> {}  -connect-> {}",
+        or1.to_string(),
+        and1.to_string(),
+        not1.to_string()
+    );
+    or1.change_input_config(0, false);
+    and1.update();
+    not1.update();
+    println!(
+        "{} -connect-> {}  -connect-> {}",
+        or1.to_string(),
+        and1.to_string(),
+        not1.to_string()
+    );
+}
