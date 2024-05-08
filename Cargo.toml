@@ -4,3 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+
+[lib]
+name = "logicO3"
+path = "./src/lib.rs"
+
+[[examples]]
+name = "sample"
+crate-type = ["staticlib"]

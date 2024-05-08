@@ -1,16 +1,40 @@
 use core::panic;
-use std::{
-    borrow::{Borrow, BorrowMut},
-    cell::RefCell,
-    ops::Deref,
-    rc::Rc,
-};
+use std::{cell::RefCell, rc::Rc};
 
-struct Circuit {
-    component: Vec<LogicCircuit>,
-    connection_path: Vec<(LogicCircuit, LogicCircuit, usize)>, // (from, to, to_input_index)
-                                                               //power: Vec<Rc<RefCell<bool>>>,
-                                                               // TODO
+pub struct Circuit {
+    component: Vec<LogicCircuit>,                // Vec[and1, or1, not1]
+    connection_path: Vec<(usize, usize, usize)>, // Vev[(from_id, to_id, to_input_index)]
+    input: Vec<Rc<RefCell<(bool, Vec<(usize, usize)>)>>>, // Vec[(Input_Binary , Vec[(to_id, to_input_index)])]
+    output: Vec<Rc<RefCell<(Vec<usize>, bool)>>>,         // Vec[(from_id, Output_Binary)]
+                                                          // update method require for change output
+}
+
+impl Circuit {
+    pub fn new() -> Self {
+        Self {
+            component: vec![],
+            connection_path: vec![],
+            input: vec![],
+            output: vec![],
+        }
+    }
+    pub fn add_logic_gate(&mut self, new_comp: LogicCircuit) {
+        self.component.push(new_comp)
+    }
+    pub fn connect_scheme(&mut self, connection: (usize, usize, usize)) {
+        self.connection_path.push(connection)
+    }
+    pub fn add_input(&mut self, no_of_input: usize) {
+        match no_of_input {
+            0 => dbg!(println!("WARNING: Number of Input Cannot be Zero")),
+            _ => {
+                for _ in 1..=no_of_input {
+                    self.input.push(Rc::new(RefCell::new((false, vec![]))))
+                }
+            }
+        }
+    }
+    //TODO
 }
 
 pub enum LogicGate {
@@ -148,54 +172,4 @@ impl LogicCircuit {
         self.update();
         other.update()
     }
-}
-
-pub fn test01() {
-    // create AND gate
-    println!("*AND Gate*");
-    let mut and1 = LogicCircuit::new(LogicGate::AND);
-    println!("{}", and1.to_string());
-
-    and1.change_input_config(0, true);
-    println!("{}", and1.to_string());
-
-    and1.change_input_config(0, false);
-    and1.change_input_config(1, true);
-    println!("{}", and1.to_string());
-
-    and1.change_input_config(0, true);
-    println!("{}", and1.to_string());
-
-    //create NOT gate
-    println!("*NOT Gate*");
-    let mut not1 = LogicCircuit::new(LogicGate::NOT);
-    println!("{}", not1.to_string());
-
-    and1.connect_head_to(&mut not1, 0);
-
-    println!("{}  -connect-> {}", and1.to_string(), not1.to_string());
-
-    // create OR Gate
-    let mut or1 = LogicCircuit::new(LogicGate::OR);
-    println!("{}", or1.to_string());
-    or1.change_input_config(0, true);
-    println!("{}", or1.to_string());
-    and1.change_input_config(0, false);
-    or1.connect_head_to(&mut and1, 0);
-
-    println!(
-        "{} -connect-> {}  -connect-> {}",
-        or1.to_string(),
-        and1.to_string(),
-        not1.to_string()
-    );
-    or1.change_input_config(0, false);
-    and1.update();
-    not1.update();
-    println!(
-        "{} -connect-> {}  -connect-> {}",
-        or1.to_string(),
-        and1.to_string(),
-        not1.to_string()
-    );
 }
