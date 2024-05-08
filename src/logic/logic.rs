@@ -7,10 +7,10 @@ use std::{
 };
 
 struct Circuit {
-    component: Vec<LogicCircut>,
-    //connection_path: ??,
-    //power: Vec<Rc<RefCell<bool>>>,
-    // TODO
+    component: Vec<LogicCircuit>,
+    connection_path: Vec<(LogicCircuit, LogicCircuit, usize)>, // (from, to, to_input_index)
+                                                               //power: Vec<Rc<RefCell<bool>>>,
+                                                               // TODO
 }
 
 pub enum LogicGate {
@@ -20,13 +20,13 @@ pub enum LogicGate {
     /*More TODO*/
 }
 
-pub struct LogicCircut {
+pub struct LogicCircuit {
     input: Vec<Rc<RefCell<bool>>>,
     gate_type: LogicGate, // Which Logic Gate
     output: Rc<RefCell<bool>>,
 }
 
-impl ToString for LogicCircut {
+impl ToString for LogicCircuit {
     fn to_string(&self) -> String {
         use LogicGate::{AND, NOT, OR};
         let mut input = String::new();
@@ -69,16 +69,16 @@ impl ToString for LogicCircut {
     }
 }
 
-impl LogicCircut {
+impl LogicCircuit {
     pub fn new(logic_type: LogicGate) -> Self {
         match logic_type {
-            LogicGate::NOT => LogicCircut {
+            LogicGate::NOT => LogicCircuit {
                 input: vec![Rc::new(RefCell::new(false))],
                 gate_type: logic_type,
                 output: RefCell::new(true).into(),
             },
             _ => {
-                let mut sample_gate = LogicCircut {
+                let mut sample_gate = LogicCircuit {
                     input: vec![Rc::new(RefCell::new(false)); 2],
                     gate_type: logic_type,
                     output: RefCell::new(false).into(),
@@ -97,7 +97,7 @@ impl LogicCircut {
                 \n So you can try new instead of new_with_pins"
                 ),
                 _ => {
-                    let mut sample_gate = LogicCircut {
+                    let mut sample_gate = LogicCircuit {
                         input: vec![Rc::new(RefCell::new(false)); number],
                         gate_type: logic_type,
                         output: RefCell::new(false).into(),
@@ -153,7 +153,7 @@ impl LogicCircut {
 pub fn test01() {
     // create AND gate
     println!("*AND Gate*");
-    let mut and1 = LogicCircut::new(LogicGate::AND);
+    let mut and1 = LogicCircuit::new(LogicGate::AND);
     println!("{}", and1.to_string());
 
     and1.change_input_config(0, true);
@@ -168,7 +168,7 @@ pub fn test01() {
 
     //create NOT gate
     println!("*NOT Gate*");
-    let mut not1 = LogicCircut::new(LogicGate::NOT);
+    let mut not1 = LogicCircuit::new(LogicGate::NOT);
     println!("{}", not1.to_string());
 
     and1.connect_head_to(&mut not1, 0);
@@ -176,7 +176,7 @@ pub fn test01() {
     println!("{}  -connect-> {}", and1.to_string(), not1.to_string());
 
     // create OR Gate
-    let mut or1 = LogicCircut::new(LogicGate::OR);
+    let mut or1 = LogicCircuit::new(LogicGate::OR);
     println!("{}", or1.to_string());
     or1.change_input_config(0, true);
     println!("{}", or1.to_string());
