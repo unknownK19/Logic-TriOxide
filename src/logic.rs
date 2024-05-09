@@ -1,5 +1,5 @@
 use core::panic;
-use std::{cell::RefCell, rc::Rc};
+use std::{borrow::BorrowMut, cell::RefCell, rc::Rc};
 
 pub struct Circuit {
     component: Vec<LogicCircuit>,                // Vec[and1, or1, not1]
@@ -22,6 +22,11 @@ impl Circuit {
         self.component.push(new_comp)
     }
     pub fn connect_scheme(&mut self, connection: (usize, usize, usize)) {
+        if self.component.len() < connection.0 {
+            dbg!(println!(
+                "WARNING: According your instructed FROM_ID is not Exist"
+            ))
+        }
         self.connection_path.push(connection)
     }
     pub fn add_input(&mut self, no_of_input: usize) {
@@ -32,6 +37,22 @@ impl Circuit {
                     self.input.push(Rc::new(RefCell::new((false, vec![]))))
                 }
             }
+        }
+    }
+    pub fn add_input_connection(&mut self, connection: (bool, Vec<(usize, usize)>)) {
+        self.input.push(Rc::new(RefCell::new(connection)))
+    }
+    pub fn change_input_config(
+        &mut self,
+        connection: (bool, Vec<(usize, usize)>),
+        input_index: usize,
+    ) {
+        if self.input.len() < input_index {
+            dbg!(println!(
+                "WARNING: according your instructed input index is out of Bound"
+            ))
+        } else {
+            *(*self.input[input_index]).borrow_mut() = connection
         }
     }
     //TODO
@@ -54,7 +75,6 @@ impl ToString for LogicCircuit {
     fn to_string(&self) -> String {
         use LogicGate::{AND, NOT, OR};
         let mut input = String::new();
-        // let input01 = *self.input[0].deref().borrow();
         for i in 1..=self.input.len() {
             input.push_str(match *(*self.input[i - 1]).borrow() {
                 true => "\x1b[32m \x1b[0m",
@@ -142,7 +162,7 @@ impl LogicCircuit {
                 _ => panic!("Wrong Input Config"),
             },
             AND => match input_len {
-                0 | 1 => panic!("Zero and Single input doesn't exist in AND Gate"),
+                0 | 1 => dbg!(println!("Zero and Single input doesn't exist in AND Gate")),
                 _ => {
                     let mut step = 0;
                     while self.input.len() != step + 1 {
@@ -152,7 +172,7 @@ impl LogicCircuit {
                 }
             },
             OR => match input_len {
-                0 | 1 => panic!("Zero and Single input doesn't exist in AND Gate"),
+                0 | 1 => dbg!(println!("Zero and Single input doesn't exist in AND Gate")),
                 _ => {
                     let mut step = 0;
                     while self.input.len() != step + 1 {
