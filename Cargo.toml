@@ -6,9 +6,6 @@ edition = "2021"
 [dependencies]
 
 [lib]
-name = "logicO3"
+name = "logic_o3"
 path = "./src/lib.rs"
 
-[[examples]]
-name = "sample"
-crate-type = ["staticlib"]

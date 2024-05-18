@@ -1,9 +1,9 @@
 use core::panic;
-use std::{borrow::BorrowMut, cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 pub struct Circuit {
     component: Vec<LogicCircuit>,                // Vec[and1, or1, not1]
-    connection_path: Vec<(usize, usize, usize)>, // Vev[(from_id, to_id, to_input_index)]
+    connection_path: Vec<(usize, usize, usize)>, // Vev[(from_comp_id, to_comp_id, to_input_index)]
     input: Vec<Rc<RefCell<(bool, Vec<(usize, usize)>)>>>, // Vec[(Input_Binary , Vec[(to_id, to_input_index)])]
     output: Vec<Rc<RefCell<(Vec<usize>, bool)>>>,         // Vec[(from_id, Output_Binary)]
                                                           // update method require for change output
@@ -21,7 +21,7 @@ impl Circuit {
     pub fn add_logic_gate(&mut self, new_comp: LogicCircuit) {
         self.component.push(new_comp)
     }
-    pub fn connect_scheme(&mut self, connection: (usize, usize, usize)) {
+    pub fn connection_scheme(&mut self, connection: (usize, usize, usize)) {
         if self.component.len() < connection.0 {
             dbg!(println!(
                 "WARNING: According your instructed FROM_ID is not Exist"
@@ -42,6 +42,11 @@ impl Circuit {
     pub fn add_input_connection(&mut self, connection: (bool, Vec<(usize, usize)>)) {
         self.input.push(Rc::new(RefCell::new(connection)))
     }
+    pub fn change_input_signal(&mut self, input_index: usize, change_to: bool) {
+        match *(*self.input[input_index]).borrow_mut() {
+            (ref mut signal, _) => *signal = change_to,
+        }
+    }
     pub fn change_input_config(
         &mut self,
         connection: (bool, Vec<(usize, usize)>),
@@ -55,6 +60,80 @@ impl Circuit {
             *(*self.input[input_index]).borrow_mut() = connection
         }
     }
+    pub fn add_output_connection(&mut self, comp_id: usize) {
+        self.output
+            .push(Rc::new(RefCell::new((vec![comp_id], false))))
+    }
+    pub fn add_comp_onoutput(&mut self, comp_id: usize, at_index: usize) {
+        match *(*self.output[at_index]).borrow_mut() {
+            (ref mut x, _) => x.push(comp_id),
+        }
+    }
+    pub fn know_no_output(&self) -> usize {
+        self.output.len()
+    }
+    pub fn know_output_comp(&self, comp_id: usize) -> bool {
+        *(*self.component[comp_id].output).borrow_mut()
+    }
+    pub fn know_output(&mut self) -> Vec<bool> {
+        let mut out = vec![];
+        for out_each in self.output.clone() {
+            match *(*out_each).borrow_mut() {
+                (_, output) => out.push(output),
+            }
+        }
+        out
+    }
+    pub fn update(&mut self) {
+        let mut count = 0;
+        {
+            while count != self.input.len() {
+                match &(*(*self.input[count]).borrow_mut()) {
+                    (x, y) => {
+                        // KNOW: x is input boolean and y is input connection
+                        for i in y {
+                            // KNOW: i has two value tuples (id_component, index_component)
+                            self.component[i.0].change_input_config(i.1, *x);
+                            self.component[i.0].update()
+                        }
+                    }
+                }
+                count += 1;
+            }
+            count = 0;
+        }
+        {
+            while count != self.connection_path.len() {
+                match self.connection_path[count] {
+                    (from_comp, to_comp, to_pin_index) => {
+                        self.component[to_comp].input[to_pin_index] =
+                            Rc::clone(&self.component[from_comp].output);
+                        self.component[to_comp].update();
+                        // Due to borrowing Conflict
+                        // self.component[from_comp]
+                        //     .connect_head_to(&mut self.component[to_comp], to_pin_index);
+                    }
+                }
+                count += 1
+            }
+            count = 0
+        }
+        {
+            while count != self.output.len() {
+                match *(*self.output[count]).borrow_mut() {
+                    (ref mut x, ref mut out) => {
+                        let mut output = false;
+                        for by_comp in x {
+                            self.component[*by_comp].update();
+                            output = output || self.know_output_comp(*by_comp);
+                        }
+                        *out = output
+                    }
+                }
+                count += 1
+            }
+        }
+    }
     //TODO
 }
 
@@ -66,9 +145,9 @@ pub enum LogicGate {
 }
 
 pub struct LogicCircuit {
-    input: Vec<Rc<RefCell<bool>>>,
-    gate_type: LogicGate, // Which Logic Gate
-    output: Rc<RefCell<bool>>,
+    input: Vec<Rc<RefCell<bool>>>, // Input pin indexing like [true, false, false, false]
+    gate_type: LogicGate,          // Which Logic Gate
+    output: Rc<RefCell<bool>>,     // Single output pin
 }
 
 impl ToString for LogicCircuit {
@@ -187,6 +266,10 @@ impl LogicCircuit {
         self.input[index] = Rc::new(change_to.into());
         self.update()
     }
+    // Connect self output pin to other input gate pin
+    // KNOW: `self` is own LogicCircuit where `other` is other LogicCircuit where`index` represent
+    // other gate input pin index
+    #[deprecated]
     pub fn connect_head_to(&mut self, other: &mut Self, index: usize) {
         other.input[index] = Rc::clone(&self.output);
         self.update();
