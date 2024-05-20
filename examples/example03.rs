@@ -1,11 +1,14 @@
 use logic_o3::logic::{Circuit, LogicCircuit};
 
 fn main() {
+    // Create new Logic Gate
     let or1 = LogicCircuit::new(logic_o3::logic::LogicGate::OR);
     let and1 = LogicCircuit::new(logic_o3::logic::LogicGate::AND);
     let not1 = LogicCircuit::new(logic_o3::logic::LogicGate::NOT);
 
+    // Create empty Circuit
     let mut circuit01 = Circuit::new();
+
 
     circuit01.add_logic_gate(and1);
     circuit01.add_logic_gate(or1);
