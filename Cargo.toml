@@ -4,10 +4,12 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Anurag"]
 description = "A simple Logic Gate simulating Library"
+repository = "https://github.com/unknownK19/Logic-TriOxide"
+categories = ["logic gate"]
+license = "MIT"
 
 [dependencies]
 
 [lib]
 name = "logic_o3"
 path = "./src/lib.rs"
-
